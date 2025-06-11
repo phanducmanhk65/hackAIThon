@@ -88,7 +88,7 @@ export const Projects = () => {
                   projectContext?.setProjectId(project._id);
                   projectContext?.setCodeStandard(project.code_standard);
                   message.success(
-                    `Navigating to ${projectContext?.projectName} detail page!`
+                    `Navigating to ${project.project_name} detail page!`
                   );
                   navigate("/project/detail");
                 }}

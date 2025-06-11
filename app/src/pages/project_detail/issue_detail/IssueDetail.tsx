@@ -36,7 +36,6 @@ export const IssueDetail = (props: IIssueDetailProps) => {
       children: (
         <div>
           <ReactDiffViewer
-            splitView={false}
             oldValue={issue?.function.code || ""}
             newValue={issue?.fix_suggestion.fixed_code || ""}
             linesOffset={
