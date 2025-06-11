@@ -3,6 +3,7 @@ import { DashBoard } from "../../pages/dashboard/DashBoard";
 import { Projects } from "../../pages/projects/Projects";
 import { ProjectProvider } from "../../context/ProjectContext";
 import { ProjectDetail } from "../../pages/project_detail/ProjectDetail";
+import { CodeStandard } from "../../pages/code_standard/CodeStandard";
 
 export const MainContent = () => {
   return (
@@ -12,6 +13,7 @@ export const MainContent = () => {
 
         <Route path="/projects" Component={Projects} />
         <Route path="project/detail" Component={ProjectDetail} />
+        <Route path="code-standard" Component={CodeStandard} />
         <Route path="/*" Component={DashBoard} />
       </Routes>
     </ProjectProvider>

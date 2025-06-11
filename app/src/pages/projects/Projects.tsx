@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { IProject } from "./interface";
-import { get } from "../../func/crud_request";
+import { get, post } from "../../func/crud_request";
 import {
   Modal,
   Form,
@@ -38,25 +38,25 @@ export const Projects = () => {
   // };
 
   const handleSubmit = async (values: any) => {
-    form.setFieldsValue({ project_name: "" });
     const formData = new FormData();
     formData.append("project_name", values.project_name);
     formData.append("code_standard", values.code_standard);
-
+    formData.append("creator", "manhpd19");
     console.log(values);
-    // const source_files: string[] = [];
-    const sourceFiles = new Blob(
-      values.source.fileList.map((file: any) => file.originFileObj)
-    );
-    formData.append("source_files", sourceFiles);
-
+    values.source.fileList.forEach((file: any) => {
+      formData.append("files", file.originFileObj, file.webkitRelativePath);
+    });
+    form.resetFields();
     try {
-      const res = await fetch("http://localhost:8000/upload-folder", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error("Upload failed");
+      const res = await post("project/add_project", formData);
+      if (!res) throw new Error("Upload failed");
+      if (res) {
+        message.success("Add new project successfully!");
+        const listProj = await get("project/get_all_project/manhpd19");
+        setListProject((prevState) => {
+          return listProj;
+        });
+      }
       setIsModalOpen(false);
     } catch (err) {}
     setIsModalOpen(false);
@@ -86,6 +86,7 @@ export const Projects = () => {
                 onClick={() => {
                   projectContext?.setProjectName(project.project_name);
                   projectContext?.setProjectId(project._id);
+                  projectContext?.setCodeStandard(project.code_standard);
                   message.success(
                     `Navigating to ${projectContext?.projectName} detail page!`
                   );
@@ -131,6 +132,7 @@ export const Projects = () => {
             }}
           >
             <Form
+              form={form}
               layout="vertical"
               style={{ maxWidth: 600 }}
               onFinish={(values) => handleSubmit(values)}
@@ -156,8 +158,8 @@ export const Projects = () => {
                 <Col span={12}>
                   <Form.Item name="code_standard" label="Code standard">
                     <Select placeholder="Select a standard" allowClear>
-                      <Option value="cert">CERT</Option>
-                      <Option value="misra">MISRA</Option>
+                      <Option value="CERT">CERT</Option>
+                      <Option value="MISRA">MISRA</Option>
                     </Select>
                   </Form.Item>
                 </Col>

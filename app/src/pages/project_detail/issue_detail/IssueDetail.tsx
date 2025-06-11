@@ -1,10 +1,6 @@
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { IIssue } from "../interface";
 import { Tabs, type TabsProps } from "antd";
-import {
-  dark,
-  monokaiSublime,
-} from "react-syntax-highlighter/dist/esm/styles/hljs";
 import ReactDiffViewer from "react-diff-viewer";
 
 interface IIssueDetailProps {
@@ -40,6 +36,7 @@ export const IssueDetail = (props: IIssueDetailProps) => {
       children: (
         <div>
           <ReactDiffViewer
+            splitView={false}
             oldValue={issue?.function.code || ""}
             newValue={issue?.fix_suggestion.fixed_code || ""}
             linesOffset={
