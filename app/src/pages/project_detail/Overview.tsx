@@ -1,4 +1,4 @@
-import { Button, Collapse, Modal, Tag, type CollapseProps } from "antd";
+import { Button, Collapse, Modal, Tag, App, type CollapseProps } from "antd";
 import { Checkbox, Col, Row } from "antd";
 import { useContext, useEffect, useState } from "react";
 import ProjectContext from "../../context/ProjectContext";
@@ -7,12 +7,21 @@ import { IIssue } from "./interface";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { monokaiSublime } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { IssueDetail } from "./issue_detail/IssueDetail";
+import { useNavigate } from "react-router-dom";
 export const Overview = () => {
+  const navigate = useNavigate();
+  const { message } = App.useApp();
   const projectContext = useContext(ProjectContext);
   const [listIssues, setListIssues] = useState<IIssue[]>([]);
   const [currentIssue, setCurrentIssue] = useState<IIssue>();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [listViolation, setListViolation] = useState<string[]>([]);
+  const [listCheckedSeverity, setListCheckedSeverity] = useState<string[]>([
+    "critical",
+    "high",
+    "medium",
+    "low",
+  ]);
   const [listCheckedViolation, setListCheckedViolation] = useState<string[]>(
     []
   );
@@ -21,19 +30,23 @@ export const Overview = () => {
       key: "1",
       label: "SEVERITY",
       children: (
-        <Checkbox.Group style={{ width: "100%" }} className="font-normal">
-          <Row>
-            <Col span={24}>
-              <Checkbox value="high">High</Checkbox>
-            </Col>
-            <Col span={24}>
-              <Checkbox value="medium">Medium</Checkbox>
-            </Col>
-            <Col span={24}>
-              <Checkbox value="low">Low</Checkbox>
-            </Col>
-          </Row>
-        </Checkbox.Group>
+        <Row className="font-normal">
+          {["critical", "high", "medium", "low"].map((item) => {
+            return (
+              <Col span={24} className="mb-2">
+                <Checkbox
+                  defaultChecked
+                  value={item}
+                  onChange={(e) => {
+                    handleCheckSeverity(e.target.checked, item);
+                  }}
+                >
+                  {item.toUpperCase()}
+                </Checkbox>
+              </Col>
+            );
+          })}
+        </Row>
       ),
     },
     {
@@ -88,10 +101,27 @@ export const Overview = () => {
     });
   };
 
+  const handleCheckSeverity = (isChecked: boolean, type: string) => {
+    let newCheckSeverityList = [...listCheckedSeverity];
+    if (isChecked) {
+      if (!newCheckSeverityList.includes(type)) {
+        newCheckSeverityList = [...newCheckSeverityList, type];
+      }
+    } else {
+      newCheckSeverityList = newCheckSeverityList.filter(
+        (item) => item !== type
+      );
+    }
+    setListCheckedSeverity(newCheckSeverityList);
+  };
+
   const isViolationTypeChecked = (type: string) => {
     return listCheckedViolation.includes(type);
   };
 
+  const isSeverityTypeChecked = (type: string) => {
+    return listCheckedSeverity.includes(type);
+  };
   useEffect(() => {
     async function getListIssues() {
       if (projectContext?.projectId) {
@@ -140,9 +170,22 @@ export const Overview = () => {
         className="h-96 w-4/5 rounded-sm border-l border-l-gray-200 border-t-0 border-r-0 border-b-0 overflow-y-auto
 "
       >
+        <div className="flex justify-end mb-2">
+          <Button
+            hidden={listIssues.length === 0}
+            onClick={() => {
+              message.success("Navigating to create pull request page!", 1);
+              navigate("/project/create-pull-request");
+            }}
+            className=" bg-[#b30e3c] rounded-[5px] text-white"
+          >
+            Fix these issues
+          </Button>
+        </div>
         {listIssues.map((item) => {
           return (
-            isViolationTypeChecked(item.rule_id) && (
+            isViolationTypeChecked(item.rule_id) &&
+            isSeverityTypeChecked(item.severity) && (
               <div className="w-full overflow-x-hidden overflow-y-auto h-64 mb-4 p-2 bg-white border-t-4 border-red-500 border-b shadow-sm dark:bg-gray-800 dark:border-gray-700">
                 <div className="mb-2 flex justify-start">
                   <h4 className="font-sans font-semibold text-xl mr-6">

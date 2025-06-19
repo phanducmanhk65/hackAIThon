@@ -11,7 +11,7 @@ interface NavigationBarProps {
 
 export const NavigationBar = (props: NavigationBarProps) => {
   const { setExpand } = props;
-  const username = "Manh";
+  const username = "User";
   const company = "FPT";
   const profilePic = " ";
   const link = "/";
@@ -37,7 +37,7 @@ export const NavigationBar = (props: NavigationBarProps) => {
           tabIndex={0}
           id={item.id}
           className={[
-            "group m-0 flex cursor-pointer rounded-lg items-center justify-between h-12 py-0 pr-3 mb-1 focus:outline-none",
+            "group m-0 flex cursor-pointer rounded-lg items-center justify-between h-12 py-0 pr-3 mb-1 outline-none focus:outline-none",
             recursive === 0 ? "pl-4" : recursive === 1 ? "pl-11" : "pl-16",
             activeName === item.name || activeName.split(".")[0] === item.name
               ? `text-blue-600 font-semibold ${
@@ -59,14 +59,27 @@ export const NavigationBar = (props: NavigationBarProps) => {
                     ].join(" ")}
                   ></div>
                 </div>
-              ) : null
+              ) : (
+                <div
+                  className={[
+                    `${classesActive ? "h-2 w-2" : "h-1 w-1"}`,
+                    "bg-current rounded-full duration-200",
+                  ].join(" ")}
+                >
+                  <div className="outline-none focus:outline-none">
+                    <span className="material-symbols-outlined mr-3">
+                      {item.icon}
+                    </span>
+                  </div>
+                </div>
+              )
             ) : null}
             <div
-              className={`truncate ${
-                isExpand ? "" : isExpandOnHover ? "" : "w-0 h-0 opacity-0"
+              className={`truncate mt-4 ${
+                isExpand ? "" : isExpandOnHover ? "" : "w-0 h-0"
               }`}
             >
-              {item.title}
+              <span className="ml-4">{item.title}</span>
             </div>
           </div>
         </Link>
@@ -125,7 +138,7 @@ export const NavigationBar = (props: NavigationBarProps) => {
                   <img src={profilePic} className="block" alt="" />
                 </div>
                 <div
-                  className={`text-base font-semibold text-slate-700 mt-3 truncate duration-300 ${
+                  className={`text-base font-semibold text-cyan-500 mt-3 truncate duration-300 ${
                     isExpand ? "" : isExpandOnHover ? "" : "w-0 h-0 opacity-0"
                   }`}
                 >

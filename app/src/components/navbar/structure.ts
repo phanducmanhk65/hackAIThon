@@ -12,7 +12,7 @@ const sidebarStructure = [
     title: "Project",
     name: "project",
     parent: true,
-    icon: "project",
+    icon: "workspaces",
     link: "/projects",
   },
   {
@@ -20,7 +20,7 @@ const sidebarStructure = [
     title: "Code Standard",
     name: "code-standard",
     parent: true,
-    icon: "code-standard",
+    icon: "list",
     link: "/code-standard",
   },
 ];

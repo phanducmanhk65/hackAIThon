@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { IProject } from "./interface";
-import { get, post } from "../../func/crud_request";
+import { get, post, remove } from "../../func/crud_request";
 import {
   Modal,
   Form,
@@ -12,9 +12,14 @@ import {
   Row,
   Col,
   App,
+  Popconfirm,
+  Tooltip,
+  Tag,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import ProjectContext from "../../context/ProjectContext";
+import { LoadingPage } from "../loading/Loading";
+import { getRandomIntRange } from "../../func/other_func";
 
 const { Option } = Select;
 export const Projects = () => {
@@ -24,19 +29,14 @@ export const Projects = () => {
   const [form] = Form.useForm();
   const [listProject, setListProject] = useState<IProject[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
-  // const handleUploadChange = ({ fileList }: any) => {
-  //   console.log("Handle", fileList);
-  //   if (fileList.length > 0) {
-  //     const relPath = fileList[0].originFileObj?.webkitRelativePath;
-  //     if (relPath) {
-  //       const folderName = relPath.split("/")[0];
-  //       // Set folder name to hidden field
-  //       form.setFieldsValue({ folderName });
-  //     }
-  //   }
-  // };
-
+  const getAllProject = async () => {
+    const listProj = await get("project/get_all_project/manhpd19");
+    setListProject((prevState) => {
+      return listProj;
+    });
+  };
   const handleSubmit = async (values: any) => {
     const formData = new FormData();
     formData.append("project_name", values.project_name);
@@ -47,19 +47,34 @@ export const Projects = () => {
       formData.append("files", file.originFileObj, file.webkitRelativePath);
     });
     form.resetFields();
+    setIsModalOpen(false);
+    setIsProcessing(true);
     try {
       const res = await post("project/add_project", formData);
-      if (!res) throw new Error("Upload failed");
-      if (res) {
-        message.success("Add new project successfully!");
-        const listProj = await get("project/get_all_project/manhpd19");
-        setListProject((prevState) => {
-          return listProj;
-        });
-      }
-      setIsModalOpen(false);
+      setTimeout(async () => {
+        setIsProcessing(false);
+        if (!res) throw new Error("Upload failed");
+        if (res) {
+          message.success("Add new project successfully!");
+          const listProj = await get("project/get_all_project/manhpd19");
+          setListProject((prevState) => {
+            return listProj;
+          });
+        }
+      }, getRandomIntRange(5000, 1000));
     } catch (err) {}
     setIsModalOpen(false);
+  };
+  const handleDeleteProject = async (project_id: string) => {
+    try {
+      const res = await remove(`project/${project_id}`, {});
+      if (res) {
+        await getAllProject();
+        message.success("Delete project successfully");
+      } else {
+        message.error("Delete project failed");
+      }
+    } catch (err) {}
   };
 
   useEffect(() => {
@@ -71,7 +86,7 @@ export const Projects = () => {
   }, []);
   return (
     <div className="w-full h-full px-6 py-6">
-      <div className="font-sans mb-6">
+      <div className="font-inter mb-6">
         <span className="mx-4 text-base text-xl text-gray-500">
           Import and scan your project
         </span>
@@ -83,19 +98,50 @@ export const Projects = () => {
               <div
                 key={project.project_name}
                 className=" px-1 py-1 m-auto mt-4 w-3/4 bg-teal-50 border border-gray-200 rounded-lg cursor-pointer"
-                onClick={() => {
-                  projectContext?.setProjectName(project.project_name);
-                  projectContext?.setProjectId(project._id);
-                  projectContext?.setCodeStandard(project.code_standard);
-                  message.success(
-                    `Navigating to ${project.project_name} detail page!`
-                  );
-                  navigate("/project/detail");
-                }}
               >
-                <div className="p-4 md:p-5">
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-white">
-                    {project.project_name}
+                <div className="">
+                  <h3 className="pl-3 text-base font-bold text-gray-800 dark:text-white font-inter">
+                    {project.project_name}{" "}
+                    <Tag color="red">{project.code_standard}</Tag>
+                    <div className="flex justify-end">
+                      <Tooltip title="Project detail">
+                        <span
+                          className="material-icons text-blue-800 bg-blue text-2xl"
+                          onClick={() => {
+                            projectContext?.setProjectName(
+                              project.project_name
+                            );
+                            projectContext?.setProjectId(project._id);
+                            projectContext?.setCodeStandard(
+                              project.code_standard
+                            );
+                            message.success(
+                              `Navigating to ${project.project_name} detail page!`,
+                              1
+                            );
+                            navigate("/project/detail");
+                          }}
+                        >
+                          open_in_new
+                        </span>
+                      </Tooltip>
+
+                      <Tooltip title="Delete project">
+                        <Popconfirm
+                          title="Delete project"
+                          description="Are you sure to delete this project?"
+                          onConfirm={() => {
+                            handleDeleteProject(project._id);
+                          }}
+                          okText="Yes"
+                          cancelText="No"
+                        >
+                          <span className="material-symbols-outlined text-2xl text-red-600 ml-2 mr-3">
+                            delete
+                          </span>
+                        </Popconfirm>
+                      </Tooltip>
+                    </div>
                   </h3>
                 </div>
               </div>
@@ -105,7 +151,7 @@ export const Projects = () => {
         <div className="h-full w-2/5 bg-blue-50">
           <img
             alt=""
-            className="h-full w-full object-contain md:object-cover rounded-lg"
+            className="h-full w-full object-fit md:object-cover rounded-lg"
             src="../../../project_page.jpg"
           />
         </div>
@@ -137,12 +183,27 @@ export const Projects = () => {
               style={{ maxWidth: 600 }}
               onFinish={(values) => handleSubmit(values)}
             >
-              <Form.Item name="project_name" label="Project name">
+              <Form.Item
+                name="project_name"
+                label="Project name"
+                rules={[
+                  { required: true, message: "Please input project name!" },
+                ]}
+              >
                 <Input />
               </Form.Item>
               <Row gutter={8}>
                 <Col span={12}>
-                  <Form.Item name="source" label="Source">
+                  <Form.Item
+                    name="source"
+                    label="Source"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please upload source",
+                      },
+                    ]}
+                  >
                     <Upload
                       directory
                       multiple
@@ -156,7 +217,16 @@ export const Projects = () => {
                   </Form.Item>
                 </Col>
                 <Col span={12}>
-                  <Form.Item name="code_standard" label="Code standard">
+                  <Form.Item
+                    name="code_standard"
+                    label="Code standard"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Please choose a code standard!",
+                      },
+                    ]}
+                  >
                     <Select placeholder="Select a standard" allowClear>
                       <Option value="CERT">CERT</Option>
                       <Option value="MISRA">MISRA</Option>
@@ -173,6 +243,8 @@ export const Projects = () => {
           </Modal>
         </div>
       </div>
+
+      {isProcessing && <LoadingPage />}
     </div>
   );
 };

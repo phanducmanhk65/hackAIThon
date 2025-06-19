@@ -11,6 +11,7 @@ export const get = async (url: string) => {
 export const post = async (url: string, data: any) => {
   const result = await axios.post(`${PREFIX_URL}${url}`, data, {
     withCredentials: true,
+    timeout: 100000,
   });
   return result.data;
 };
